@@ -140,6 +140,7 @@ public:
         eMatchScore             m_priority;
 
         eTargetType             m_targetType;
+
     };
 
     typedef XalanVector<TargetData>     TargetDataVectorType;
@@ -1039,7 +1040,8 @@ public:
             XPathExecutionContext&  executionContext,
             OpCodeMapPositionType   opPos,
             OpCodeMapValueType      argLen,
-            OpCodeMapValueType      stepType);
+            OpCodeMapValueType      stepType,
+            const XalanDOMString*   contextNamespace = 0);
 
         NodeTester(
             XPathConstructionContext&   theContext,
@@ -2656,6 +2658,8 @@ private:
      * to be at least that of the transformation.
      */
     bool                m_inStylesheet;
+
+    mutable XalanNode*    m_initialContextNode;
 
     /**
      *

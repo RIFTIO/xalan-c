@@ -17,7 +17,7 @@
  */
 
 /*
- * $Id$
+ * $Id: xalan_sample_prefix.h 471582 2006-11-06 00:32:24Z dmitryh $
  */
 
 //	Objective C only

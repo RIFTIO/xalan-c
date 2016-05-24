@@ -68,7 +68,8 @@ XPath::XPath(
             const Locator*  theLocator) :
     m_expression(theManager),
     m_locator(theLocator),
-    m_inStylesheet(false)
+    m_inStylesheet(false),
+    m_initialContextNode(0)
 {
 }
 
@@ -157,6 +158,7 @@ XPath::execute(
             const PrefixResolver&   prefixResolver,
             XPathExecutionContext&  executionContext) const
 {
+    m_initialContextNode = context;
     // Push and pop the PrefixResolver...
     const PrefixResolverSetAndRestore   theResolverSetAndRestore(
                                     executionContext,
@@ -183,6 +185,7 @@ XPath::execute(
             bool&                   result) const
 {
     assert(context != 0);
+    m_initialContextNode = context;
 
     // Push and pop the PrefixResolver...
     const PrefixResolverSetAndRestore   theResolverSetAndRestore(
@@ -211,6 +214,7 @@ XPath::execute(
             double&                 result) const
 {
     assert(context != 0);
+    m_initialContextNode = context;
 
     // Push and pop the PrefixResolver...
     const PrefixResolverSetAndRestore   theResolverSetAndRestore(
@@ -239,6 +243,7 @@ XPath::execute(
             XalanDOMString&         result) const
 {
     assert(context != 0);
+    m_initialContextNode = context;
 
     // Push and pop the PrefixResolver...
     const PrefixResolverSetAndRestore   theResolverSetAndRestore(
@@ -268,7 +273,8 @@ XPath::execute(
             MemberFunctionPtr       function) const
 {
     assert(context != 0);
-
+    m_initialContextNode = context;
+    
     // Push and pop the PrefixResolver...
     const PrefixResolverSetAndRestore   theResolverSetAndRestore(
                                     executionContext,
@@ -298,6 +304,7 @@ XPath::execute(
 {
     assert(context != 0);
     assert(result.empty() == true);
+    m_initialContextNode = context;
 
     // Push and pop the PrefixResolver...
     const PrefixResolverSetAndRestore   theResolverSetAndRestore(
@@ -3837,7 +3844,8 @@ XPath::findChildren(
                         executionContext,
                         opPos,
                         argLen,
-                        stepType);
+                        stepType,
+                        &m_initialContextNode->getNamespaceURI());
 
         do
         {
@@ -4611,7 +4619,8 @@ XPath::NodeTester::NodeTester(
             XPathExecutionContext&  executionContext,
             OpCodeMapPositionType   opPos,
             OpCodeMapValueType      argLen,
-            OpCodeMapValueType      stepType) :
+            OpCodeMapValueType      stepType,
+            const XalanDOMString*   contextNamespace) :
     m_executionContext(&executionContext),
     m_targetNamespace(0),
     m_targetLocalName(0),
@@ -4671,9 +4680,25 @@ XPath::NodeTester::NodeTester(
         {
             bool    isTotallyWild = false;
 
-            m_targetNamespace = getStringFromTokenQueue(
-                    theExpression,
-                    opPos + 1);
+            
+            const XalanDOMString* localNamespace = getStringFromTokenQueue(
+                theExpression,
+                opPos + 1);
+
+            if (localNamespace == 0 && contextNamespace == 0)
+            {
+                m_targetNamespace = 0;
+            }
+            else {
+                if (localNamespace)
+                {
+                  m_targetNamespace = localNamespace;
+                }
+                else
+                {
+                  m_targetNamespace = contextNamespace;
+                }
+            }
 
             if (m_targetNamespace == 0 &&
                 theExpression.getOpCodeMapValue(opPos + 2) == XPathExpression::eELEMWILDCARD)
